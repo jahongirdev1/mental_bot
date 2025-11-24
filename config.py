@@ -1,9 +1,10 @@
 from functools import lru_cache
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+
 
 
 class Settings(BaseSettings):
-    BOT_TOKEN: str = "your_token_here"
+    BOT_TOKEN: str = "7089495505:AAF21wmxnoBLJAPFa9ERGqLHKq-EpUoTxpk"
     MONGO_URL: str = "mongodb://localhost:27017"
     DB_NAME: str = "mental_bot"
 

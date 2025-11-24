@@ -1,33 +1,33 @@
-GREETING_TEXT = "greeting\nHow are you feeling today?"
-CHECKIN_THANKS = "Thank you for sharing. Your check-in has been saved."
-CHECKIN_PROMPT = "What seems to be the main cause today?"
-STATS_EMPTY = "No entries for the last 7 days. Use /start to log your mood."
-STATS_TITLE = "Weekly Mood Overview"
-STRESS_INTRO = "Let's go through a quick 7-question stress test."
-STRESS_COMPLETED = "Stress test completed."
-PANIC_INTRO = "Follow this calming sequence."
+GREETING_TEXT = "Сәлем 🙂\nБүгін өзіңізді қалай сезініп тұрсыз?"
+CHECKIN_THANKS = "Рахмет. Сезіміңіз тіркелді."
+CHECKIN_PROMPT = "Бүгінгі көңіл-күйге не себеп болып тұр?"
+STATS_EMPTY = "Соңғы 7 күнде жазбалар жоқ. Көңіл-күйіңізді жазу үшін /start командасын пайдаланыңыз."
+STATS_TITLE = "Апталық көңіл-күй қорытындысы"
+STRESS_INTRO = "Қысқа 7 сұрақтан тұратын стресс тестін бастайық."
+STRESS_COMPLETED = "Стресс тесті аяқталды."
+PANIC_INTRO = "Мына тыныштандыру жаттығуын бірге орындайық."
 
 STRESS_QUESTIONS = [
-    "I feel overwhelmed by daily tasks.",
-    "I struggle to relax even in calm settings.",
-    "My sleep has been restless.",
-    "I feel tense or on edge.",
-    "I have trouble concentrating.",
-    "I feel irritable more than usual.",
-    "I experience headaches or body tension often."
+    "Күнделікті істер қатты шаршататындай көрінеді.",
+    "Тыныш ортада да босаңсу қиын.",
+    "Ұйқым мазасыз немесе бөлінеді.",
+    "Өзімді үнемі күштеніп, мазасыз сезінемін.",
+    "Назарымды жағдаятқа шоғырландыру қиындайды.",
+    "Әдеттегіден жиірек ашуланамын.",
+    "Жиі бас ауырады немесе дене ширығады."
 ]
 
 PANIC_BREATHING_STEPS = [
-    "Take a deep breath (4 seconds)",
-    "Hold (7 seconds)",
-    "Exhale slowly (8 seconds)"
+    "Терең тыныс алыңыз (4 секунд)",
+    "Тынысты ұстаңыз (7 секунд)",
+    "Баяу шығарыңыз (8 секунд)"
 ]
 
 PANIC_GROUNDING_STEPS = [
-    "Grounding exercise:",
-    "Name 5 things you can see.",
-    "Name 4 things you can touch.",
-    "Name 3 things you can hear.",
-    "Name 2 things you can smell.",
-    "Name 1 thing you can taste."
+    "Жерге бекіну жаттығуы:",
+    "Көріп тұрған 5 затты атаңыз.",
+    "Ұстай алатын 4 затты атаңыз.",
+    "Ести алатын 3 дыбысты атаңыз.",
+    "Иіскей алатын 2 нәрсені атаңыз.",
+    "Дәмін сезе алатын 1 нәрсені атаңыз."
 ]
