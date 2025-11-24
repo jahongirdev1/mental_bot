@@ -24,8 +24,8 @@ from openai import AsyncOpenAI
 # Қоршаған орта айнымалыларын жүктеу
 load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+BOT_TOKEN = ""
+OPENAI_API_KEY = ""
 
 # OpenAI клиентін дайындау
 openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)

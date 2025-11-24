@@ -9,6 +9,7 @@ motor = "*"
 python-dotenv = "*"
 aiogram = "*"
 pydantic-settings = "*"
+openai = "*"
 
 [dev-packages]
 
