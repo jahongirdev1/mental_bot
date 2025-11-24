@@ -24,8 +24,8 @@ async def main() -> None:
     )
     dp = Dispatcher(storage=MemoryStorage())
 
-    dp.include_router(ai_router)
     dp.include_router(wellbeing_router)
+    dp.include_router(ai_router)
 
     await dp.start_polling(bot)
 

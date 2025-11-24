@@ -1,5 +1,5 @@
-from aiogram.types import InlineKeyboardMarkup
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 MOOD_OPTIONS = [
     ("😊 Өте жақсы", "great"),
@@ -30,6 +30,17 @@ CAUSE_LABELS.update({"scale": "Шкала бойынша"})
 STRESS_LABELS = {value: label for label, value in STRESS_OPTIONS}
 
 
+def main_menu_keyboard() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    builder.button(text="🟩 Стресс тесті")
+    builder.button(text="🟩 Интроверт/Экстраверт")
+    builder.button(text="🟨 Мотивация түрі")
+    builder.button(text="🟥 Қай мамандық?")
+    builder.button(text="💬 CHAT AI")
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
 def mood_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for text, value in MOOD_OPTIONS:
@@ -54,7 +65,15 @@ def stress_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def back_to_menu_keyboard() -> InlineKeyboardMarkup:
+def back_to_menu_keyboard() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    builder.button(text="🏠 Басты мәзір")
+    return builder.as_markup(resize_keyboard=True)
+
+
+def quiz_answer_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="Басты мәзір", callback_data="menu:back")
+    builder.button(text="Иә", callback_data="quiz_answer:yes")
+    builder.button(text="Жоқ", callback_data="quiz_answer:no")
+    builder.adjust(2)
     return builder.as_markup()
