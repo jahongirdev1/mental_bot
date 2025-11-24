@@ -19,6 +19,8 @@ from bot.keyboards import (
 from database.db import checkins_collection, stress_collection
 from database.models import CheckIn, StressTestResult
 from utils.texts import (
+    BREATH_INTRO,
+    BREATH_STEPS,
     CHECKIN_PROMPT,
     CHECKIN_THANKS,
     GREETING_TEXT,
@@ -116,8 +118,10 @@ async def cmd_stats(message: Message) -> None:
     triggers = Counter()
     daily = defaultdict(list)
     for entry in entries:
-        mood = entry.get("mood")
-        score = MOOD_VALUES.get(mood, 3)
+        score = entry.get("mood_score")
+        if score is None:
+            mood = entry.get("mood")
+            score = MOOD_VALUES.get(mood, 3)
         scores.append(score)
         triggers[entry.get("cause")] += 1
         day = entry.get("date")
@@ -140,6 +144,24 @@ async def cmd_stats(message: Message) -> None:
         f"Қиын күн: {worst_day[0].isoformat()} (орташа {worst_avg:.2f})",
     ]
     await message.answer("\n".join(lines), reply_markup=back_to_menu_keyboard())
+
+
+@router.message(Command("mood"))
+async def cmd_mood_scale(message: Message) -> None:
+    if not message.text or len(message.text.split(maxsplit=1)) < 2:
+        await message.answer("/mood кейін 1-10 аралығындағы ұпайды жазыңыз (мысалы, /mood 7).")
+        return
+    try:
+        score = int(message.text.split(maxsplit=1)[1])
+    except ValueError:
+        await message.answer("Тек бүтін сан енгізіңіз: 1-ден 10-ға дейін.")
+        return
+    if not 1 <= score <= 10:
+        await message.answer("Ұпай 1-10 аралығында болуы тиіс.")
+        return
+    checkin = CheckIn(user_id=message.from_user.id, mood="scale", cause="scale", mood_score=score)
+    await checkins_collection.insert_one(checkin.dict())
+    await message.answer(f"Көңіл-күй ұпайы {score} ретінде сақталды. Рахмет!")
 
 
 @router.message(Command("stress_test"))
@@ -189,5 +211,13 @@ async def cmd_panic(message: Message) -> None:
         await asyncio.sleep(1)
         await message.answer(step)
     for step in PANIC_GROUNDING_STEPS:
+        await asyncio.sleep(1)
+        await message.answer(step)
+
+
+@router.message(Command("breath"))
+async def cmd_breath(message: Message) -> None:
+    await message.answer(BREATH_INTRO)
+    for step in BREATH_STEPS:
         await asyncio.sleep(1)
         await message.answer(step)

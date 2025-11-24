@@ -82,6 +82,20 @@ async def cmd_stress_ai(message: Message) -> None:
     await message.answer(reply)
 
 
+@router.message(Command("mental_ai"))
+async def cmd_mental_ai(message: Message) -> None:
+    if not message.text or len(message.text.split(maxsplit=1)) < 2:
+        await message.answer("/mental_ai кейін қызықтыратын психология тақырыбын немесе сұрағыңызды жазыңыз.")
+        return
+    user_text = message.text.split(maxsplit=1)[1]
+    prompt = (
+        f"{SYSTEM_PROMPT}\n\nПайдаланушымен психологиялық қолдау аясында еркін сөйлес."
+        f" Тақырып: {user_text}. Ашық сұрақ қойып, жылы әрі қысқа жауап бер."
+    )
+    reply = await generate_gemini(prompt)
+    await message.answer(reply)
+
+
 @router.message(F.text)
 async def fallback_ai(message: Message) -> None:
     prompt = (

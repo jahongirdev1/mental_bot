@@ -26,6 +26,7 @@ STRESS_OPTIONS = [
 
 MOOD_LABELS = {value: label for label, value in MOOD_OPTIONS}
 CAUSE_LABELS = {value: label for label, value in CAUSE_OPTIONS}
+CAUSE_LABELS.update({"scale": "Шкала бойынша"})
 STRESS_LABELS = {value: label for label, value in STRESS_OPTIONS}
 
 
