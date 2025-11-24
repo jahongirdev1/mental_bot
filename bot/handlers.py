@@ -14,6 +14,7 @@ from bot.keyboards import (
     cause_keyboard,
     mood_keyboard,
     stress_keyboard,
+    STRESS_LABELS,
 )
 from database.db import checkins_collection, stress_collection
 from database.models import CheckIn, StressTestResult
@@ -55,7 +56,7 @@ MOOD_VALUES = {
 
 def format_triggers(counter: Counter) -> str:
     if not counter:
-        return "No triggers tracked."
+        return "Триггерлер тіркелмеген."
     max_count = max(counter.values())
     top = [CAUSE_LABELS.get(key, str(key)) for key, value in counter.items() if value == max_count]
     return ", ".join(top)
@@ -63,10 +64,10 @@ def format_triggers(counter: Counter) -> str:
 
 def stress_level(score: int) -> str:
     if score <= 2:
-        return "low stress"
+        return "төмен стресс"
     if score <= 5:
-        return "medium stress"
-    return "high stress"
+        return "орташа стресс"
+    return "жоғары стресс"
 
 
 @router.message(Command("start"))
@@ -132,11 +133,11 @@ async def cmd_stats(message: Message) -> None:
     worst_avg = sum(worst_day[1]) / len(worst_day[1])
     lines = [
         STATS_TITLE,
-        f"Entries: {len(entries)}",
-        f"Average mood score: {average:.2f}",
-        f"Most common triggers: {format_triggers(triggers)}",
-        f"Best day: {best_day[0].isoformat()} (avg {best_avg:.2f})",
-        f"Tough day: {worst_day[0].isoformat()} (avg {worst_avg:.2f})",
+        f"Жазбалар саны: {len(entries)}",
+        f"Орташа көңіл-күй ұпайы: {average:.2f}",
+        f"Ең жиі себептер: {format_triggers(triggers)}",
+        f"Ең жеңіл күн: {best_day[0].isoformat()} (орташа {best_avg:.2f})",
+        f"Қиын күн: {worst_day[0].isoformat()} (орташа {worst_avg:.2f})",
     ]
     await message.answer("\n".join(lines), reply_markup=back_to_menu_keyboard())
 
@@ -158,7 +159,7 @@ async def handle_stress(callback: CallbackQuery, state: FSMContext) -> None:
     details: list[str] = data.get("details", [])
     if value == "yes":
         score += 1
-    details.append(f"{STRESS_QUESTIONS[index]} - {value.title()}")
+    details.append(f"{STRESS_QUESTIONS[index]} - {STRESS_LABELS.get(value, value)}")
     index += 1
     if index >= len(STRESS_QUESTIONS):
         level = stress_level(score)
@@ -170,7 +171,7 @@ async def handle_stress(callback: CallbackQuery, state: FSMContext) -> None:
         )
         await stress_collection.insert_one(result.dict())
         await callback.message.answer(
-            f"{STRESS_COMPLETED}\nScore: {score}/{len(STRESS_QUESTIONS)}\nLevel: {level.title()}",
+            f"{STRESS_COMPLETED}\nҰпай: {score}/{len(STRESS_QUESTIONS)}\nДеңгей: {level.title()}",
             reply_markup=back_to_menu_keyboard(),
         )
         await state.clear()
