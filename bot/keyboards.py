@@ -30,6 +30,17 @@ CAUSE_LABELS.update({"scale": "Шкала бойынша"})
 STRESS_LABELS = {value: label for label, value in STRESS_OPTIONS}
 
 
+def main_menu_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🟩 Стресс тесті", callback_data="quiz:stress_level")
+    builder.button(text="🟩 Интроверт/Экстраверт", callback_data="quiz:personality")
+    builder.button(text="🟨 Мотивация түрі", callback_data="quiz:motivation")
+    builder.button(text="🟥 Қай мамандық?", callback_data="quiz:career")
+    builder.button(text="💬 CHAT AI", callback_data="menu:chat")
+    builder.adjust(1)
+    return builder.as_markup()
+
+
 def mood_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for text, value in MOOD_OPTIONS:
@@ -57,4 +68,12 @@ def stress_keyboard() -> InlineKeyboardMarkup:
 def back_to_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="Басты мәзір", callback_data="menu:back")
+    return builder.as_markup()
+
+
+def quiz_answer_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Иә", callback_data="quiz_answer:yes")
+    builder.button(text="Жоқ", callback_data="quiz_answer:no")
+    builder.adjust(2)
     return builder.as_markup()
