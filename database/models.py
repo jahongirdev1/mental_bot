@@ -8,6 +8,7 @@ class CheckIn(BaseModel):
     date: datetime = Field(default_factory=datetime.utcnow)
     mood: str
     cause: str
+    mood_score: Optional[int] = None
 
 
 class StressTestResult(BaseModel):
