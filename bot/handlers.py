@@ -200,11 +200,6 @@ async def cmd_menu(message: Message, state: FSMContext) -> None:
     await cmd_start(message, state)
 
 
-@router.message(F.text == "🏠 Басты мәзір")
-async def back_to_menu_button(message: Message, state: FSMContext) -> None:
-    await cmd_start(message, state)
-
-
 @router.message(Command("checkin"))
 async def cmd_checkin(message: Message, state: FSMContext) -> None:
     await state.clear()
@@ -212,19 +207,31 @@ async def cmd_checkin(message: Message, state: FSMContext) -> None:
     await message.answer(GREETING_TEXT, reply_markup=mood_keyboard())
 
 
-@router.message(F.text == "💬 CHAT AI")
-async def start_chat(message: Message, state: FSMContext) -> None:
+@router.callback_query(F.data == "menu:back")
+async def back_to_menu(callback: CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
+    await state.set_state(AppStates.idle)
+    await callback.message.answer(
+        "Басты мәзірге қайттық. Төменнен ойын немесе CHAT AI таңдаңыз.",
+        reply_markup=main_menu_keyboard(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu:chat")
+async def start_chat(callback: CallbackQuery, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state == AppStates.quiz.state:
-        await message.answer("Алдымен тестті аяқтаңыз.")
+        await callback.answer("Алдымен тестті аяқтаңыз.", show_alert=True)
         return
     await state.clear()
     await state.set_state(AppStates.chat)
-    await message.answer(
+    await callback.message.answer(
         "CHAT AI іске қосылды. Сұрағыңызды немесе ойыңызды жазыңыз."
         " Аяқтасаңыз, төмендегі Басты мәзірді басыңыз.",
         reply_markup=back_to_menu_keyboard(),
     )
+    await callback.answer()
 
 
 @router.callback_query(CheckInStates.mood, F.data.startswith("mood:"))
@@ -249,39 +256,20 @@ async def handle_cause(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
 
 
-@router.message(F.text.in_(
-    [
-        "🟩 Стресс тесті",
-        "🟩 Интроверт/Экстраверт",
-        "🟨 Мотивация түрі",
-        "🟥 Қай мамандық?",
-    ]
-))
-async def start_quiz_from_menu(message: Message, state: FSMContext) -> None:
-    mapping = {
-        "🟩 Стресс тесті": "stress_level",
-        "🟩 Интроверт/Экстраверт": "personality",
-        "🟨 Мотивация түрі": "motivation",
-        "🟥 Қай мамандық?": "career",
-    }
-    quiz_key = mapping.get(message.text)
-    await start_quiz(message, state, quiz_key)
-
-
-async def start_quiz(message: Message, state: FSMContext, quiz_key: str | None = None) -> None:
-    if quiz_key is None:
-        return
+@router.callback_query(F.data.startswith("quiz:"))
+async def start_quiz(callback: CallbackQuery, state: FSMContext) -> None:
+    quiz_key = callback.data.split(":", 1)[1]
     if quiz_key not in QUIZZES:
-        await message.answer("Белгісіз тест.")
+        await callback.answer("Белгісіз тест.", show_alert=True)
         return
-    await state.clear()
     await state.set_state(AppStates.quiz)
     await state.update_data(quiz_key=quiz_key, index=0, score=0)
     quiz = QUIZZES[quiz_key]
-    await message.answer(
+    await callback.message.answer(
         f"{quiz_header(quiz_key)}\n10 сұраққа Иә/Жоқ деп жауап беріңіз.",
     )
-    await message.answer(quiz["questions"][0], reply_markup=quiz_answer_keyboard())
+    await callback.message.answer(quiz["questions"][0], reply_markup=quiz_answer_keyboard())
+    await callback.answer()
 
 
 @router.callback_query(AppStates.quiz, F.data.startswith("quiz_answer:"))

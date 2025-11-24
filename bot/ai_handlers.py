@@ -126,7 +126,7 @@ async def cmd_mental_ai(message: Message, state: FSMContext) -> None:
     await message.answer(reply)
 
 
-@router.message(AppStates.chat, F.text)
+@router.message(F.text)
 async def fallback_ai(message: Message, state: FSMContext) -> None:
     if not await _ensure_chat_mode(message, state):
         return
