@@ -8,9 +8,12 @@ pydantic = "*"
 motor = "*"
 aiogram = "*"
 pydantic-settings = "*"
-google-generativeai = "*"
+google-genai = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.11"
+
+[overrides]
+google-ai-generativelanguage = {version = "==9.9.9"}

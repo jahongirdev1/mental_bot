@@ -1,31 +1,39 @@
-"""Gemini модельімен жұмыс істейтін қарапайым көмекші."""
-
 import asyncio
-
-import google.generativeai as genai
-
+from google.genai import Client
 from config import settings
 
 
+client = Client(api_key=settings.GEMINI_API_KEY)
+
+MODEL = "gemini-2.0-flash"
+
 SYSTEM_PROMPT = (
     "Сен қазақ тілінде сөйлейтін мейірімді психологиялық ассистентсің. "
-    "Әр жауапта эмоцияны байқап, ықтимал себепті көрсетіп, үш қысқа кеңес бер. "
-    "Қауіпті немесе өзін-өзі жарақаттау туралы мәтін болса, қауіпсіздік туралы ескертуді қос."
+    "Эмоцияны байқап, ықтимал себепті көрсетіп, үш қысқа кеңес бер. "
+    "Өзін-өзі жарақаттау туралы мәтін болса, қауіпсіздік туралы ескерту қос."
 )
 
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
-
-
 def _generate(prompt: str) -> str:
-    response = model.generate_content(prompt)
-    return response.text.strip() if response and response.text else "Кешіріңіз, жауап бере алмадым."
+    try:
+
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=[
+                {
+                    "role": "user",
+                    "parts": [
+                        {"text": f"{SYSTEM_PROMPT}\n\nПайдаланушы: {prompt}"}
+                    ]
+                }
+            ]
+        )
+        return response.text or "Кешіріңіз, жауап бере алмадым."
+
+    except Exception as e:
+        return f"Қате пайда болды: {e}"
 
 
 async def generate_gemini(prompt: str) -> str:
-    """Синхронды Gemini клиентін асинхронды түрде орау."""
-
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, lambda: _generate(prompt))
-
