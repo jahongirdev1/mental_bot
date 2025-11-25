@@ -32,11 +32,11 @@ STRESS_LABELS = {value: label for label, value in STRESS_OPTIONS}
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
-    builder.button(text="🟩 Стресс тесті")
-    builder.button(text="🟩 Интроверт/Экстраверт")
-    builder.button(text="🟨 Мотивация түрі")
-    builder.button(text="🟥 Қай мамандық?")
-    builder.button(text="💬 CHAT AI")
+    builder.button(text="🌡️  Стресс тесті")
+    builder.button(text="🧬  Интроверт/Экстраверт")
+    builder.button(text="🔥 Мотивация түрі")
+    builder.button(text="💼 Қай мамандық?")
+    builder.button(text="🤖 CHAT AI")
     builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 
