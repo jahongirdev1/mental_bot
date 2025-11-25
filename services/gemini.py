@@ -1,7 +1,5 @@
-import asyncio
 from google.genai import Client
-from config import settings
-
+import asyncio
 
 client = Client(api_key="")
 

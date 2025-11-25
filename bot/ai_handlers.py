@@ -1,20 +1,16 @@
-"""AI жауаптарын Gemini арқылы беретін хэндлерлер."""
-
-from aiogram import F, Router
-from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
-
 from services.gemini import SYSTEM_PROMPT, generate_gemini
+from aiogram.fsm.context import FSMContext
+from aiogram.filters import Command
+from aiogram.types import Message
 from bot.states import AppStates
-
+from aiogram import F, Router
 
 router = Router()
 
 
 async def _ask_gemini(user_text: str) -> str:
     prompt = f"{SYSTEM_PROMPT}\n\nПайдаланушының мәтіні: {user_text}\n\nКөмекші:" \
-        " эмоция → себеп → 3 кеңес → қолдау форматын сақтасын."
+             " эмоция → себеп → 3 кеңес → қолдау форматын сақтасын."
     return await generate_gemini(prompt)
 
 
@@ -136,4 +132,3 @@ async def fallback_ai(message: Message, state: FSMContext) -> None:
     )
     reply = await generate_gemini(prompt)
     await message.answer(reply)
-
