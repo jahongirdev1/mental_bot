@@ -6,7 +6,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from bot.keyboards import (
     CAUSE_LABELS,
@@ -198,6 +198,20 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
 @router.message(Command("menu"))
 async def cmd_menu(message: Message, state: FSMContext) -> None:
     await cmd_start(message, state)
+
+
+@router.message(F.text == "🏠 Басты мәзір")
+async def handle_menu_button(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await state.set_state(AppStates.idle)
+    await message.answer(
+        "Басты мәзірге қайттық. Төменнен ойын немесе CHAT AI таңдаңыз.",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+    await message.answer(
+        "Қай сервисті таңдайсыз? Тестті таңдаңыз немесе CHAT AI арқылы сөйлесіңіз.",
+        reply_markup=main_menu_keyboard(),
+    )
 
 
 @router.message(Command("checkin"))
