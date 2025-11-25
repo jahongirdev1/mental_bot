@@ -1,47 +1,63 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environments
-.env
-.venv
+# C extensions
+*.so
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# If you have collectstatic directory
+static/
+
+# Django migrations
+*/migrations/__pycache__/
+*/migrations/*.py[cod]
+
+# Virtual environment
 venv/
-ENV/
-env/
+.env
+.env.bak
+.envrc
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Distribution / packaging
-.Python
-build/
-dist/
-.eggs/
-*.egg-info/
-
-# IDEs and editors
+# IDE
 .vscode/
 .idea/
-*.swp
+*.sublime-project
+*.sublime-workspace
 
 # OS files
 .DS_Store
+Thumbs.db
 
-# Logs and databases
-*.log
-*.sqlite3
+# Pipenv
+Pipfile.lock
 
-# Local configuration
-.env.local
-.env.*.local
-
-# pytest
-.pytest_cache/
-
-# Coverage
+# pytest / coverage
 htmlcov/
 .tox/
-.coverage*
-.cache/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
 
-# aiogram state
-*.session
-*.session-journal
+apps/
