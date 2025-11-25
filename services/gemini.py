@@ -3,7 +3,7 @@ from google.genai import Client
 from config import settings
 
 
-client = Client(api_key=settings.GEMINI_API_KEY)
+client = Client(api_key="")
 
 MODEL = "gemini-2.0-flash"
 
