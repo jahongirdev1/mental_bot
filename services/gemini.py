@@ -1,7 +1,7 @@
 from google.genai import Client
 import asyncio
 
-client = Client(api_key="")
+client = Client(api_key="AIzaSyDQYAfvTfznIkWHFKgTBjEystP1hGHgwSU")
 
 MODEL = "gemini-2.0-flash"
 
