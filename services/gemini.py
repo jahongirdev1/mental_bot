@@ -1,5 +1,7 @@
-from google.genai import Client
 import asyncio
+from google.genai import Client
+from config import settings
+
 
 client = Client(api_key="")
 
@@ -35,3 +37,6 @@ def _generate(prompt: str) -> str:
 async def generate_gemini(prompt: str) -> str:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, lambda: _generate(prompt))
+
+
+

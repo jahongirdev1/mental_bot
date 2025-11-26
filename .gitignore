@@ -45,6 +45,8 @@ Thumbs.db
 
 # Pipenv
 Pipfile.lock
+Pipfile
+
 
 # pytest / coverage
 htmlcov/
