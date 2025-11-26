@@ -1,134 +1,127 @@
-from services.gemini import SYSTEM_PROMPT, generate_gemini
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 from aiogram.types import Message
 from bot.states import AppStates
 from aiogram import F, Router
 
+from services.gemini import generate_gemini
+from utils.language import resolve_language
+from utils.texts import get_system_prompt, get_text
+
 router = Router()
 
 
-async def _ask_gemini(user_text: str) -> str:
-    prompt = f"{SYSTEM_PROMPT}\n\nПайдаланушының мәтіні: {user_text}\n\nКөмекші:" \
-             " эмоция → себеп → 3 кеңес → қолдау форматын сақтасын."
-    return await generate_gemini(prompt)
+async def _ask_gemini(user_text: str, language: str) -> str:
+    prompt = get_text("ai_chat_prompt", language).format(user_text=user_text)
+    prompt = f"{prompt}\n{get_text('fallback_prompt', language)}"
+    return await generate_gemini(prompt, get_system_prompt(language))
 
 
-async def _ensure_chat_mode(message: Message, state: FSMContext) -> bool:
+async def _ensure_chat_mode(message: Message, state: FSMContext, language: str) -> bool:
     current_state = await state.get_state()
     if current_state == AppStates.quiz.state:
-        await message.answer("Алдымен тестті аяқтаңыз, содан кейін CHAT AI батырмасын басыңыз.")
+        await message.answer(get_text("finish_quiz_first", language))
         return False
     if current_state and current_state != AppStates.chat.state:
-        await message.answer(
-            "Қазір басқа қадам жүріп жатыр. Басты мәзірден CHAT AI батырмасын баспас бұрын оны аяқтаңыз."
-        )
+        await message.answer(get_text("complete_other_step", language))
         return False
     if current_state != AppStates.chat.state:
-        await message.answer("AI-пен сөйлесу үшін басты мәзірдегі CHAT AI батырмасын басыңыз.")
+        await message.answer(get_text("start_chat_first", language))
         return False
     return True
 
 
 @router.message(Command("ai"))
 async def cmd_ai(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("/ai кейін мәселе немесе ойыңызды жазыңыз.")
+        await message.answer(get_text("ai_usage", language))
         return
     user_text = message.text.split(maxsplit=1)[1]
-    reply = await _ask_gemini(user_text)
+    reply = await _ask_gemini(user_text, language)
     await message.answer(reply)
 
 
 @router.message(Command("emo"))
 async def cmd_emotion(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("Эмоцияны анықтау үшін /emo кейін мәтін жазыңыз.")
+        await message.answer(get_text("emotion_usage", language))
         return
     user_text = message.text.split(maxsplit=1)[1]
-    prompt = (
-        f"{SYSTEM_PROMPT}\n\nЭмоцияны қысқа ата, ықтимал себепті көрсет және 3 қолдау кеңесін жаз."
-        f" Мәтін: {user_text}"
-    )
-    reply = await generate_gemini(prompt)
+    prompt = get_text("emotion_prompt", language).format(user_text=user_text)
+    reply = await generate_gemini(prompt, get_system_prompt(language))
     await message.answer(reply)
 
 
 @router.message(Command("reframe"))
 async def cmd_reframe(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("Теріс ойды қайта қарау үшін /reframe кейін ойды жазыңыз.")
+        await message.answer(get_text("reframe_usage", language))
         return
     user_text = message.text.split(maxsplit=1)[1]
-    prompt = (
-        f"{SYSTEM_PROMPT}\n\nТеріс ойды CBT тәсілімен қайта құрыңыз."
-        f" Эмоция → себеп → 3 жаңа ой → қолдау форматын сақта. Ой: {user_text}"
-    )
-    reply = await generate_gemini(prompt)
+    prompt = get_text("reframe_prompt", language).format(user_text=user_text)
+    reply = await generate_gemini(prompt, get_system_prompt(language))
     await message.answer(reply)
 
 
 @router.message(Command("decision"))
 async def cmd_decision(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("Мәселені жазу үшін /decision кейін мәтін қосыңыз.")
+        await message.answer(get_text("decision_usage", language))
         return
     user_text = message.text.split(maxsplit=1)[1]
-    prompt = (
-        f"{SYSTEM_PROMPT}\n\nПроблеманы шешу үшін 3 нақты қадам ұсын."
-        f" Әр қадам қысқа әрекет болсын. Мәселе: {user_text}"
-    )
-    reply = await generate_gemini(prompt)
+    prompt = get_text("decision_prompt", language).format(user_text=user_text)
+    reply = await generate_gemini(prompt, get_system_prompt(language))
     await message.answer(reply)
 
 
 @router.message(Command("stress_ai"))
 async def cmd_stress_ai(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("Стресс туғызатын жағдайды /stress_ai кейін жазыңыз.")
+        await message.answer(get_text("stress_ai_usage", language))
         return
     user_text = message.text.split(maxsplit=1)[1]
-    prompt = (
-        f"{SYSTEM_PROMPT}\n\nМәтінді оқып, стресс деңгейін (төмен/орташа/жоғары) белгіле."
-        f" Себебін қысқа түсіндіріп, 3 нақты кеңес бер. Мәтін: {user_text}"
-    )
-    reply = await generate_gemini(prompt)
+    prompt = get_text("stress_ai_prompt", language).format(user_text=user_text)
+    reply = await generate_gemini(prompt, get_system_prompt(language))
     await message.answer(reply)
 
 
 @router.message(Command("mental_ai"))
 async def cmd_mental_ai(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("/mental_ai кейін қызықтыратын психология тақырыбын немесе сұрағыңызды жазыңыз.")
+        await message.answer(get_text("mental_ai_usage", language))
         return
     user_text = message.text.split(maxsplit=1)[1]
-    prompt = (
-        f"{SYSTEM_PROMPT}\n\nПайдаланушымен психологиялық қолдау аясында еркін сөйлес."
-        f" Тақырып: {user_text}. Ашық сұрақ қойып, жылы әрі қысқа жауап бер."
-    )
-    reply = await generate_gemini(prompt)
+    prompt = get_text("mental_ai_prompt", language).format(user_text=user_text)
+    reply = await generate_gemini(prompt, get_system_prompt(language))
     await message.answer(reply)
 
 
 @router.message(AppStates.chat, F.text)
 async def fallback_ai(message: Message, state: FSMContext) -> None:
-    if not await _ensure_chat_mode(message, state):
+    language = await resolve_language(state, message.from_user.id)
+    if not await _ensure_chat_mode(message, state, language):
         return
     prompt = (
-        f"{SYSTEM_PROMPT}\n\nПайдаланушының мәтіні: {message.text}\n"
-        "Қысқа әрі нақты жауап бер, эмоция мен қолдауды ұмытпа."
+        f"{get_text('ai_chat_prompt', language).format(user_text=message.text)}\n"
+        f"{get_text('fallback_prompt', language)}"
     )
-    reply = await generate_gemini(prompt)
+    reply = await generate_gemini(prompt, get_system_prompt(language))
     await message.answer(reply)
