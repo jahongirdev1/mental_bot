@@ -8,31 +8,27 @@ from aiogram import F, Router
 import asyncio
 
 from bot.keyboards import (
-    CAUSE_LABELS,
-    STRESS_LABELS,
     cause_keyboard,
+    language_keyboard,
     main_menu_keyboard,
     mood_keyboard,
     quiz_answer_keyboard,
     stress_keyboard,
+    cause_labels,
+    stress_labels,
 )
 from bot.states import AppStates
 from database.db import checkins_collection, stress_collection
 from database.models import CheckIn, StressTestResult
+from utils.language import resolve_language, update_language
 from utils.texts import (
-    BREATH_INTRO,
-    BREATH_STEPS,
-    CHECKIN_PROMPT,
-    CHECKIN_THANKS,
-    GREETING_TEXT,
-    PANIC_BREATHING_STEPS,
-    PANIC_GROUNDING_STEPS,
-    PANIC_INTRO,
-    STATS_EMPTY,
-    STATS_TITLE,
-    STRESS_COMPLETED,
-    STRESS_INTRO,
-    STRESS_QUESTIONS,
+    get_language_label,
+    get_list,
+    get_quiz,
+    get_quiz_button_map,
+    get_stress_level_labels,
+    get_text,
+    language_button_labels,
 )
 
 router = Router()
@@ -47,102 +43,8 @@ class StressTestStates(StatesGroup):
     question = State()
 
 
-QUIZZES: dict[str, dict[str, object]] = {
-    "stress_level": {
-        "title": "1-Ойын: Стресс деңгейін анықтау тесті",
-        "badge": "🌡️",
-        "questions": [
-            "Соңғы күндері өзіңізді жиі шаршаңқы сезінесіз бе?",
-            "Қарапайым тапсырмалардың өзі ауыр болып көріне ме?",
-            "Ұйқыңыздың сапасы төмендеп кетті ме?",
-            "Кешке басыңыз жиі ауыра ма?",
-            "Ұсақ мәселелерге тез ашуланып қаласыз ба?",
-            "Уақыт ештеңеге жетпей жатқандай сезілетін кездер бола ма?",
-            "Артық уайымдайсыз ба?",
-            "Ештеңеге көңіл-күй болмай қалатын күндер бола ма?",
-            "Демалғаннан кейін де шаршау басылмай ма?",
-            "Күн ішінде зейін қою қиынға соға ма?",
-        ],
-        "ranges": [
-            (3, "Төмен стресс", "Ұпай аз – күш-қуатыңыз жақсы. Режимді сақтап, демалысты ұмытпаңыз."),
-            (6, "Орташа стресс", "Аздап шаршау бар. Кішкентай үзілістер, жеңіл жаттығу мен ұйқы тәртібі көмектеседі."),
-            (10, "Жоғары стресс",
-             "Күшті стресс байқалады. Жұмысты жеңілдету, демалыс жоспарлау және қажет болса маманға жүгіну маңызды."),
-        ],
-    },
-    "personality": {
-        "title": "2-Ойын: Интроверт пе, экстраверт пе?",
-        "badge": "🧬 ",
-        "questions": [
-            "Жалғыз өткізетін уақыт сізге ұнай ма?",
-            "Көп адаммен бірге болу сізді шаршата ма?",
-            "Жаңа адамдармен танысу оңай ма?",
-            "Мерекелерде көпшіліктің ортасында жүруді ұнатасыз ба?",
-            "Телефон қоңырауынан қашатын кездеріңіз бола ма?",
-            "Әңгіме бастау сізге оңай ма?",
-            "Жалғыз қалу сізге энергия береді ме?",
-            "Топпен жұмыс істегенді жақсы көресіз бе?",
-            "Өз сезімдеріңізді білдіру қиынға соға ма?",
-            "Алдын ала жоспарсыз, кенеттен бір нәрсе жасауды ұнатасыз ба?",
-        ],
-        "ranges": [
-            (3, "Көбірек экстраверт",
-             "Әңгіме мен адамдардан күш аласыз. Топтық жобалар мен коммуникация қажет салалар сай келеді."),
-            (6, "Амбиверт",
-             "Екі жаққа да бейімсіз: жалғыздық пен компанияны тең ұнатасыз. Жұмыс таңдағанда тепе-теңдік жасаңыз."),
-            (10, "Көбірек интроверт",
-             "Тыныш орта мен жеке жұмысқа бейімсіз. Жұмысты жоспарлап, демалысқа уақыт бөліп отырыңыз."),
-        ],
-    },
-    "motivation": {
-        "title": "3-Ойын: Мотивация түрін анықтау (ішкі/сыртқы)",
-        "badge": "🔥",
-        "questions": [
-            "Тапсырма орындауда ең маңыздысы – нәтиже деп ойлайсыз ба?",
-            "Мақтау естігенде көбірек ынталанасыз ба?",
-            "Жаңа нәрсе үйрену сізге қызық па?",
-            "Сыйлық болмаса жұмыс істеу қиын ба?",
-            "Мақсат қоюды жақсы көресіз бе?",
-            "Процестен гөрі нәтижені маңызды санайсыз ба?",
-            "Өз дамуыңыз үшін қиын тапсырмалар алуға дайынсыз ба?",
-            "Біреулер күткені үшін жұмыс істейтін кезіңіз бола ма?",
-            "Өзіңізді жетілдіруге бағытталған істер мотивация береді ме?",
-            "Нәтиже тез көрінбесе, қызығушылық тез сөне ме?",
-        ],
-        "ranges": [
-            (
-            3, "Ішкі мотивация басым", "Үйрену мен даму сізді алға жетелейді. Жеке мақсат қойып, прогресті бақылаңыз."),
-            (6, "Аралас мотивация",
-             "Ішкі де, сыртқы да ынталандыру әсер етеді. Екеуін тең ұштастырып, өзіңізді марапаттауды ұмытпаңыз."),
-            (10, "Сыртқы мотивация басым",
-             "Қарапайым сыйақы мен кері байланыс маңызды. Нәтижені бөлшектеп, аралық жетістіктерге сый жасаңыз."),
-        ],
-    },
-    "career": {
-        "title": "4-Ойын: Саған қай мамандық сәйкес келеді? (Мини-карьера тест)",
-        "badge": "💼",
-        "questions": [
-            "Адамдармен жұмыс істеу сізге ұнай ма?",
-            "Техника мен бағдарламалауға қызығасыз ба?",
-            "Командада жұмыс істеу ыңғайлы ма?",
-            "Графикалық дизайнға қызығуыңыз бар ма?",
-            "Сөйлеп, презентация жасағанды ұнатасыз ба?",
-            "Мәселелерді шешу сізді қызықтыра ма?",
-            "Санмен жұмыс істеу ұнай ма?",
-            "Жаңа идеялар ойлап табу қолыңыздан келе ме?",
-            "Тәртіп пен нақты жоспар сізге маңызды ма?",
-            "Бір уақытта бірнеше істі қатар атқара аласыз ба?",
-        ],
-        "ranges": [
-            (3, "Шығармашылық/бейтарап бағыт",
-             "Бірнеше саланы байқап көру керек. Хобби форматында тест жасап, өзіңізге ұнайтын бағытты белгілеңіз."),
-            (6, "Теңгерімді әмбебаптығыңыз бар",
-             "Жоба менеджменті, өнім дайындау немесе аналитика сияқты аралас салаларға бейімсіз."),
-            (10, "Адамдармен және идеямен жұмыс",
-             "Коммуникация, дизайн не IT жобалары сай келеді. Өзекті курстарды қарап, шағын пилот жобадан бастаңыз."),
-        ],
-    },
-}
+QUIZ_BUTTON_MAP = get_quiz_button_map()
+LANGUAGE_BUTTONS = set(language_button_labels())
 
 MOOD_VALUES = {
     "great": 5,
@@ -154,29 +56,30 @@ MOOD_VALUES = {
 }
 
 
-def format_triggers(counter: Counter) -> str:
+def format_triggers(counter: Counter, language: str) -> str:
     if not counter:
-        return "Триггерлер тіркелмеген."
+        return get_text("triggers_empty", language)
+    labels = cause_labels(language)
     max_count = max(counter.values())
-    top = [CAUSE_LABELS.get(key, str(key)) for key, value in counter.items() if value == max_count]
+    top = [labels.get(key, str(key)) for key, value in counter.items() if value == max_count]
     return ", ".join(top)
 
 
-def stress_level(score: int) -> str:
+def stress_level(score: int, language: str) -> str:
+    labels = get_stress_level_labels(language)
     if score <= 2:
-        return "төмен стресс"
+        return labels.get("low")
     if score <= 5:
-        return "орташа стресс"
-    return "жоғары стресс"
+        return labels.get("medium")
+    return labels.get("high")
 
 
-def quiz_header(quiz_key: str) -> str:
-    quiz = QUIZZES[quiz_key]
+def quiz_header(quiz: dict) -> str:
     return f"{quiz['badge']} {quiz['title']}"
 
 
-def quiz_result_text(quiz_key: str, score: int, total: int) -> str:
-    quiz = QUIZZES[quiz_key]
+def quiz_result_text(quiz_key: str, score: int, total: int, language: str) -> str:
+    quiz = get_quiz(language, quiz_key)
     level = ""
     advice = ""
     for max_score, label, tip in quiz["ranges"]:
@@ -185,20 +88,22 @@ def quiz_result_text(quiz_key: str, score: int, total: int) -> str:
         if score <= max_score:
             break
     return (
-        f"{quiz_header(quiz_key)} аяқталды!\n"
-        f"Ұпай: {score}/{total}\n"
-        f"Нәтиже: {level}\n"
-        f"Кеңес: {advice}"
+        f"{get_text('quiz_completed', language).format(quiz_header=quiz_header(quiz))}\n"
+        f"{get_text('score_label', language)} {score}/{total}\n"
+        f"{get_text('result_label', language)} {level}\n"
+        f"{get_text('advice_label', language)} {advice}"
     )
 
 
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
     await state.clear()
     await state.set_state(AppStates.idle)
+    await state.update_data(language=language)
     await message.answer(
-        "Қай сервисті таңдайсыз? Тестті таңдаңыз немесе CHAT AI арқылы сөйлесіңіз.",
-        reply_markup=main_menu_keyboard(),
+        get_text("start_prompt", language),
+        reply_markup=main_menu_keyboard(language),
     )
 
 
@@ -209,61 +114,77 @@ async def cmd_menu(message: Message, state: FSMContext) -> None:
 
 @router.message(Command("checkin"))
 async def cmd_checkin(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
     await state.clear()
     await state.set_state(CheckInStates.mood)
-    await message.answer(GREETING_TEXT, reply_markup=mood_keyboard())
+    await state.update_data(language=language)
+    await message.answer(get_text("greeting", language), reply_markup=mood_keyboard(language))
 
 
-QUIZ_BUTTONS: dict[str, str] = {
-    "🌡️ Стресс тесті": "stress_level",
-    "🧬 Интроверт/Экстраверт": "personality",
-    "🔥 Мотивация түрі": "motivation",
-    "💼 Қай мамандық?": "career",
-}
+@router.message(Command("language"))
+@router.message(F.text.in_(LANGUAGE_BUTTONS))
+async def choose_language(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
+    await message.answer(get_text("language_prompt", language), reply_markup=language_keyboard())
+
+
+@router.callback_query(F.data.startswith("lang:"))
+async def apply_language(callback: CallbackQuery, state: FSMContext) -> None:
+    language_code = callback.data.split(":", 1)[1]
+    language = await update_language(state, callback.from_user.id, language_code)
+    await callback.message.answer(
+        get_text("language_updated", language).format(language=get_language_label(language)),
+        reply_markup=main_menu_keyboard(language),
+    )
+    await callback.answer()
 
 
 @router.message(F.text == "🤖 CHAT AI")
 async def start_chat(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
     current_state = await state.get_state()
     if current_state == AppStates.quiz.state:
-        await message.answer("Алдымен тестті аяқтаңыз.")
+        await message.answer(get_text("finish_quiz_first", language))
         return
     await state.clear()
     await state.set_state(AppStates.chat)
+    await state.update_data(language=language)
     await message.answer(
-        "CHAT AI іске қосылды. Сұрағыңызды немесе ойыңызды жазыңыз."
-        " Қызметтерді ауыстыру үшін төмендегі мәзірді пайдаланыңыз.",
-        reply_markup=main_menu_keyboard(),
+        get_text("chat_started", language),
+        reply_markup=main_menu_keyboard(language),
     )
 
 
-@router.message(F.text.in_(QUIZ_BUTTONS))
+@router.message(F.text.in_(QUIZ_BUTTON_MAP))
 async def start_quiz(message: Message, state: FSMContext) -> None:
-    quiz_key = QUIZ_BUTTONS[message.text]
-    if quiz_key not in QUIZZES:
-        await message.answer("Белгісіз тест.")
+    language = await resolve_language(state, message.from_user.id)
+    quiz_key = QUIZ_BUTTON_MAP.get(message.text)
+    if not quiz_key:
+        await message.answer(get_text("unknown_quiz", language))
         return
     await state.set_state(AppStates.quiz)
     await state.update_data(quiz_key=quiz_key, index=0, score=0)
-    quiz = QUIZZES[quiz_key]
+    quiz = get_quiz(language, quiz_key)
     await message.answer(
-        f"{quiz_header(quiz_key)}\n10 сұраққа Иә/Жоқ деп жауап беріңіз.",
-        reply_markup=main_menu_keyboard(),
+        get_text("quiz_intro", language).format(quiz_header=quiz_header(quiz)),
+        reply_markup=main_menu_keyboard(language),
     )
-    await message.answer(quiz["questions"][0], reply_markup=quiz_answer_keyboard())
+    await message.answer(quiz["questions"][0], reply_markup=quiz_answer_keyboard(language))
 
 
 @router.callback_query(CheckInStates.mood, F.data.startswith("mood:"))
 async def handle_mood(callback: CallbackQuery, state: FSMContext) -> None:
+    language = await resolve_language(state, callback.from_user.id)
     mood = callback.data.split(":", 1)[1]
     await state.update_data(mood=mood)
     await state.set_state(CheckInStates.cause)
-    await callback.message.answer(CHECKIN_PROMPT, reply_markup=cause_keyboard())
+    await callback.message.answer(get_text("checkin_prompt", language), reply_markup=cause_keyboard(language))
     await callback.answer()
 
 
 @router.callback_query(CheckInStates.cause, F.data.startswith("cause:"))
 async def handle_cause(callback: CallbackQuery, state: FSMContext) -> None:
+    language = await resolve_language(state, callback.from_user.id)
     cause = callback.data.split(":", 1)[1]
     data = await state.get_data()
     mood = data.get("mood")
@@ -271,51 +192,56 @@ async def handle_cause(callback: CallbackQuery, state: FSMContext) -> None:
     await checkins_collection.insert_one(checkin.dict())
     await state.clear()
     await state.set_state(AppStates.idle)
-    await callback.message.answer(CHECKIN_THANKS, reply_markup=main_menu_keyboard())
+    await state.update_data(language=language)
+    await callback.message.answer(get_text("checkin_thanks", language), reply_markup=main_menu_keyboard(language))
     await callback.answer()
 
 
 @router.callback_query(AppStates.quiz, F.data.startswith("quiz_answer:"))
 async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext) -> None:
+    language = await resolve_language(state, callback.from_user.id)
     data = await state.get_data()
     quiz_key: str = data.get("quiz_key")
     index: int = data.get("index", 0)
     score: int = data.get("score", 0)
-    if not quiz_key or quiz_key not in QUIZZES:
-        await callback.message.answer("Тест табылмады. Басты мәзірден қайта таңдаңыз.")
+    if not quiz_key:
+        await callback.message.answer(get_text("quiz_not_found", language))
         await state.clear()
         await callback.answer()
         return
-    quiz = QUIZZES[quiz_key]
+    quiz = get_quiz(language, quiz_key)
     answer_value = callback.data.split(":", 1)[1]
     if answer_value == "yes":
         score += 1
     index += 1
     total = len(quiz["questions"])
     if index >= total:
-        result_text = quiz_result_text(quiz_key, score, total)
-        await callback.message.answer(result_text, reply_markup=main_menu_keyboard())
+        result_text = quiz_result_text(quiz_key, score, total, language)
+        await callback.message.answer(result_text, reply_markup=main_menu_keyboard(language))
         await state.clear()
         await state.set_state(AppStates.idle)
+        await state.update_data(language=language)
         await callback.answer()
         return
     await state.update_data(index=index, score=score, quiz_key=quiz_key)
-    await callback.message.answer(quiz["questions"][index], reply_markup=quiz_answer_keyboard())
+    await callback.message.answer(quiz["questions"][index], reply_markup=quiz_answer_keyboard(language))
     await callback.answer()
 
 
 @router.message(AppStates.quiz)
-async def quiz_text_block(message: Message) -> None:
-    await message.answer("Қазір тест жүріп жатыр. Иә/Жоқ батырмаларын пайдаланыңыз.")
+async def quiz_text_block(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
+    await message.answer(get_text("quiz_in_progress", language))
 
 
 @router.message(Command("stats"))
-async def cmd_stats(message: Message) -> None:
+async def cmd_stats(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
     since = datetime.utcnow() - timedelta(days=7)
     cursor = checkins_collection.find({"user_id": message.from_user.id, "date": {"$gte": since}})
     entries = await cursor.to_list(length=1000)
     if not entries:
-        await message.answer(STATS_EMPTY)
+        await message.answer(get_text("stats_empty", language))
         return
     scores = []
     triggers = Counter()
@@ -339,55 +265,62 @@ async def cmd_stats(message: Message) -> None:
     best_avg = sum(best_day[1]) / len(best_day[1])
     worst_avg = sum(worst_day[1]) / len(worst_day[1])
     lines = [
-        STATS_TITLE,
-        f"Жазбалар саны: {len(entries)}",
-        f"Орташа көңіл-күй ұпайы: {average:.2f}",
-        f"Ең жиі себептер: {format_triggers(triggers)}",
-        f"Ең жеңіл күн: {best_day[0].isoformat()} (орташа {best_avg:.2f})",
-        f"Қиын күн: {worst_day[0].isoformat()} (орташа {worst_avg:.2f})",
+        get_text("stats_title", language),
+        f"{get_text('stats_count', language)} {len(entries)}",
+        f"{get_text('stats_average', language)} {average:.2f}",
+        f"{get_text('stats_triggers', language)} {format_triggers(triggers, language)}",
+        f"{get_text('stats_best_day', language)} {best_day[0].isoformat()} ({get_text('stats_average', language).lower()} {best_avg:.2f})",
+        f"{get_text('stats_worst_day', language)} {worst_day[0].isoformat()} ({get_text('stats_average', language).lower()} {worst_avg:.2f})",
     ]
-    await message.answer("\n".join(lines), reply_markup=main_menu_keyboard())
+    await message.answer("\n".join(lines), reply_markup=main_menu_keyboard(language))
 
 
 @router.message(Command("mood"))
-async def cmd_mood_scale(message: Message) -> None:
+async def cmd_mood_scale(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
     if not message.text or len(message.text.split(maxsplit=1)) < 2:
-        await message.answer("/mood кейін 1-10 аралығындағы ұпайды жазыңыз (мысалы, /mood 7).")
+        await message.answer(get_text("mood_usage", language))
         return
     try:
         score = int(message.text.split(maxsplit=1)[1])
     except ValueError:
-        await message.answer("Тек бүтін сан енгізіңіз: 1-ден 10-ға дейін.")
+        await message.answer(get_text("mood_integer", language))
         return
     if not 1 <= score <= 10:
-        await message.answer("Ұпай 1-10 аралығында болуы тиіс.")
+        await message.answer(get_text("mood_range", language))
         return
     checkin = CheckIn(user_id=message.from_user.id, mood="scale", cause="scale", mood_score=score)
     await checkins_collection.insert_one(checkin.dict())
-    await message.answer(f"Көңіл-күй ұпайы {score} ретінде сақталды. Рахмет!")
+    await message.answer(get_text("mood_saved", language).format(score=score))
 
 
 @router.message(Command("stress_test"))
 async def cmd_stress_test(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
     await state.set_state(StressTestStates.question)
     await state.update_data(index=0, score=0, details=[])
-    await message.answer(STRESS_INTRO)
-    await message.answer(STRESS_QUESTIONS[0], reply_markup=stress_keyboard())
+    await message.answer(get_text("stress_intro", language))
+    questions = get_list("stress_questions", language)
+    await message.answer(questions[0], reply_markup=stress_keyboard(language))
 
 
 @router.callback_query(StressTestStates.question, F.data.startswith("stress:"))
 async def handle_stress(callback: CallbackQuery, state: FSMContext) -> None:
+    language = await resolve_language(state, callback.from_user.id)
     value = callback.data.split(":", 1)[1]
     data = await state.get_data()
     index = data.get("index", 0)
     score = data.get("score", 0)
     details: list[str] = data.get("details", [])
+    questions = get_list("stress_questions", language)
     if value == "yes":
         score += 1
-    details.append(f"{STRESS_QUESTIONS[index]} - {STRESS_LABELS.get(value, value)}")
+    labels = stress_labels(language)
+    if index < len(questions):
+        details.append(f"{questions[index]} - {labels.get(value, value)}")
     index += 1
-    if index >= len(STRESS_QUESTIONS):
-        level = stress_level(score)
+    if index >= len(questions):
+        level = stress_level(score, language)
         result = StressTestResult(
             user_id=callback.from_user.id,
             score=score,
@@ -396,32 +329,37 @@ async def handle_stress(callback: CallbackQuery, state: FSMContext) -> None:
         )
         await stress_collection.insert_one(result.dict())
         await callback.message.answer(
-            f"{STRESS_COMPLETED}\nҰпай: {score}/{len(STRESS_QUESTIONS)}\nДеңгей: {level.title()}",
-            reply_markup=main_menu_keyboard(),
+            f"{get_text('stress_completed', language)}\n"
+            f"{get_text('stress_score_label', language)} {score}/{len(questions)}\n"
+            f"{get_text('stress_level_label', language)} {level.title()}",
+            reply_markup=main_menu_keyboard(language),
         )
         await state.clear()
         await state.set_state(AppStates.idle)
+        await state.update_data(language=language)
         await callback.answer()
         return
     await state.update_data(index=index, score=score, details=details)
-    await callback.message.answer(STRESS_QUESTIONS[index], reply_markup=stress_keyboard())
+    await callback.message.answer(questions[index], reply_markup=stress_keyboard(language))
     await callback.answer()
 
 
 @router.message(Command("panic"))
-async def cmd_panic(message: Message) -> None:
-    await message.answer(PANIC_INTRO)
-    for step in PANIC_BREATHING_STEPS:
+async def cmd_panic(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
+    await message.answer(get_text("panic_intro", language))
+    for step in get_list("panic_breathing_steps", language):
         await asyncio.sleep(1)
         await message.answer(step)
-    for step in PANIC_GROUNDING_STEPS:
+    for step in get_list("panic_grounding_steps", language):
         await asyncio.sleep(1)
         await message.answer(step)
 
 
 @router.message(Command("breath"))
-async def cmd_breath(message: Message) -> None:
-    await message.answer(BREATH_INTRO)
-    for step in BREATH_STEPS:
+async def cmd_breath(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
+    await message.answer(get_text("breath_intro", language))
+    for step in get_list("breath_steps", language):
         await asyncio.sleep(1)
         await message.answer(step)
