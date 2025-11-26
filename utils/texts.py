@@ -9,6 +9,11 @@ SUPPORTED_LANGUAGES = {
     LANGUAGE_RU: "Русский язык",
 }
 
+LANGUAGE_FLAGS = {
+    LANGUAGE_KK: "🇰🇿",
+    LANGUAGE_RU: "🇷🇺",
+}
+
 SYSTEM_PROMPTS = {
     LANGUAGE_KK: (
         "Сен қазақ тілінде сөйлейтін мейірімді психологиялық ассистентсің. "
@@ -506,7 +511,10 @@ def get_quiz_answer_options(language: str) -> List[Tuple[str, str]]:
 
 
 def get_language_options() -> Iterable[Tuple[str, str]]:
-    return SUPPORTED_LANGUAGES.items()
+    return [
+        (code, f"{LANGUAGE_FLAGS.get(code, '')} {name}".strip())
+        for code, name in SUPPORTED_LANGUAGES.items()
+    ]
 
 
 def get_language_names() -> List[str]:
