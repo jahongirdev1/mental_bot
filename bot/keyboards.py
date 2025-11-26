@@ -62,8 +62,8 @@ def quiz_answer_keyboard(language: str) -> InlineKeyboardMarkup:
 
 def language_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    for name, code in get_language_options():
-        builder.button(text=name, callback_data=f"lang:{code}")
+    for code, label in get_language_options():
+        builder.button(text=label, callback_data=f"lang:{code}")
     builder.adjust(1)
     return builder.as_markup()
 
