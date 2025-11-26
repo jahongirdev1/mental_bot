@@ -5,23 +5,16 @@ client = Client(api_key="")
 
 MODEL = "gemini-2.0-flash"
 
-SYSTEM_PROMPT = (
-    "Сен қазақ тілінде сөйлейтін мейірімді психологиялық ассистентсің. "
-    "Эмоцияны байқап, ықтимал себепті көрсетіп, үш қысқа кеңес бер. "
-    "Өзін-өзі жарақаттау туралы мәтін болса, қауіпсіздік туралы ескерту қос."
-)
 
-
-def _generate(prompt: str) -> str:
+def _generate(prompt: str, system_prompt: str) -> str:
     try:
-
         response = client.models.generate_content(
             model=MODEL,
             contents=[
                 {
                     "role": "user",
                     "parts": [
-                        {"text": f"{SYSTEM_PROMPT}\n\nПайдаланушы: {prompt}"}
+                        {"text": f"{system_prompt}\n\nПайдаланушы: {prompt}"}
                     ]
                 }
             ]
@@ -32,6 +25,6 @@ def _generate(prompt: str) -> str:
         return f"Қате пайда болды: {e}"
 
 
-async def generate_gemini(prompt: str) -> str:
+async def generate_gemini(prompt: str, system_prompt: str) -> str:
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, lambda: _generate(prompt))
+    return await loop.run_in_executor(None, lambda: _generate(prompt, system_prompt))
