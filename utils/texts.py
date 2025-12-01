@@ -1,3 +1,4 @@
+import random
 from typing import Iterable, List, Tuple
 
 LANGUAGE_KK = "kk"
@@ -200,6 +201,27 @@ LIST_TEXTS = {
         ],
     },
 }
+
+
+QUOTES = {
+    LANGUAGE_KK: [
+        "Өзіңізге мейіріммен қараңыз: кішкентай қадамдар да алға жылжудың белгісі.",
+        "Тыныс алыңыз, тоқтаңыз және өзіңізге демалуға рұқсат беріңіз – сіз бұған лайықсыз.",
+        "Қиын күндер өтеді, ал сіздің төзімділігіңіз қалады. Өз күшіңізге сеніңіз.",
+    ],
+    LANGUAGE_RU: [
+        "Отнеситесь к себе с добротой: маленькие шаги тоже движение вперёд.",
+        "Сделайте вдох и позвольте себе передышку – вы заслужили это.",
+        "Сложные дни проходят, а ваша стойкость остаётся. Верьте в свои силы.",
+    ],
+}
+
+
+def get_random_quote(language: str) -> str:
+    quotes = QUOTES.get(language) or QUOTES.get(DEFAULT_LANGUAGE) or []
+    if not quotes:
+        return ""
+    return random.choice(quotes)
 
 STRESS_LEVELS = {
     LANGUAGE_KK: {
