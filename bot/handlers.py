@@ -21,6 +21,8 @@ from bot.states import AppStates
 from database.db import checkins_collection, stress_collection
 from database.models import CheckIn, StressTestResult
 from utils.language import resolve_language, update_language
+from config import get_settings
+from services.gemini import generate_gemini
 from utils.texts import (
     get_language_label,
     get_list,
@@ -29,6 +31,7 @@ from utils.texts import (
     get_stress_level_labels,
     get_text,
     language_button_labels,
+    get_random_quote,
 )
 
 router = Router()
@@ -93,6 +96,13 @@ def quiz_result_text(quiz_key: str, score: int, total: int, language: str) -> st
         f"{get_text('result_label', language)} {level}\n"
         f"{get_text('advice_label', language)} {advice}"
     )
+
+
+@router.message(F.text.in_(["✨ Қолдау цитатасы", "✨ Цитата поддержки"]))
+async def send_support_quote(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
+    quote = get_random_quote(language)
+    await message.answer(quote, reply_markup=main_menu_keyboard(language))
 
 
 @router.message(Command("start"))
@@ -232,6 +242,42 @@ async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext) -> None
 async def quiz_text_block(message: Message, state: FSMContext) -> None:
     language = await resolve_language(state, message.from_user.id)
     await message.answer(get_text("quiz_in_progress", language))
+
+
+settings = get_settings()
+
+
+@router.message(AppStates.chat)
+async def handle_chat_message(message: Message, state: FSMContext) -> None:
+    """
+    Обрабатывает сообщения в режиме CHAT AI, вызывает Gemini с историей
+    и обновляет историю.
+    """
+    if not message.text:
+        return
+
+    user_id = message.from_user.id
+
+    await message.bot.send_chat_action(chat_id=user_id, action="typing")
+
+    data = await state.get_data()
+
+    history = data.get("chat_history", [])
+
+    user_prompt = message.text
+
+    ai_response_text = await generate_gemini(
+        history=history,
+        new_prompt=user_prompt,
+        system_prompt=settings.SYSTEM_PROMPT
+    )
+
+    history.append({"role": "user", "text": user_prompt})
+    history.append({"role": "model", "text": ai_response_text})
+
+    await state.update_data(chat_history=history[-20:])
+
+    await message.answer(ai_response_text, reply_markup=main_menu_keyboard(data.get("language")))
 
 
 @router.message(Command("stats"))
