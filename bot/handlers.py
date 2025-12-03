@@ -122,6 +122,14 @@ async def cmd_menu(message: Message, state: FSMContext) -> None:
     await cmd_start(message, state)
 
 
+@router.message(F.text == "💡 Автор идеи")
+async def show_idea_author(message: Message, state: FSMContext) -> None:
+    language = await resolve_language(state, message.from_user.id)
+    await message.answer(
+        get_text("idea_author", language), reply_markup=main_menu_keyboard(language)
+    )
+
+
 @router.message(Command("checkin"))
 async def cmd_checkin(message: Message, state: FSMContext) -> None:
     language = await resolve_language(state, message.from_user.id)
